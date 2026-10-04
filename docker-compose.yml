@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: letterbookxd-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: letterbookxd
+      MYSQL_USER: letterbookxd
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - letterbookxd-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: letterbookxd-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - letterbookxd-network
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: apps/api-gateway/Dockerfile
+    container_name: letterbookxd-api-gateway
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: mysql://letterbookxd:password@mysql:3306/letterbookxd
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      TMDB_API_KEY: ${TMDB_API_KEY}
+      CORS_ORIGIN: http://localhost:3000
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./apps/api-gateway:/app
+      - /app/node_modules
+    networks:
+      - letterbookxd-network
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: letterbookxd-web
+    environment:
+      VITE_API_URL: http://localhost:8080
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api-gateway
+    volumes:
+      - ./apps/web:/app
+      - /app/node_modules
+    networks:
+      - letterbookxd-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: letterbookxd-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      - web
+      - api-gateway
+    networks:
+      - letterbookxd-network
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  letterbookxd-network:
+    driver: bridge
