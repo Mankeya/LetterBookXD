@@ -1,7 +1,8 @@
 {
   "name": "@letterbookxd/api-gateway",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
+  "description": "LetterBookXD API Gateway - Fastify + TypeScript",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -10,7 +11,9 @@
     "start": "node dist/index.js",
     "lint": "eslint src --ext .ts",
     "test": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "tsx src/db/migrate.ts",
+    "db:seed": "tsx src/db/seed.ts"
   },
   "dependencies": {
     "fastify": "^4.28.0",
@@ -21,19 +24,29 @@
     "@fastify/redis": "^6.1.0",
     "@fastify/swagger": "^8.14.0",
     "@fastify/swagger-ui": "^4.0.0",
+    "@fastify/cookie": "^9.3.0",
+    "@fastify/csrf": "^5.2.0",
+    "@fastify/multipart": "^8.2.0",
     "zod": "^3.23.0",
     "ioredis": "^5.4.0",
-    "pino-pretty": "^11.2.0"
+    "bcrypt": "^5.1.1",
+    "pino-pretty": "^11.2.0",
+    "undici": "^6.19.0",
+    "@letterbookxd/shared-types": "*",
+    "@letterbookxd/config": "*"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
+    "@types/bcrypt": "^5.0.2",
     "typescript": "^5.5.0",
     "tsx": "^4.16.0",
     "vitest": "^2.0.0",
     "eslint": "^8.57.0",
     "@typescript-eslint/eslint-plugin": "^7.16.0",
     "@typescript-eslint/parser": "^7.16.0",
-    "@letterbookxd/shared-types": "*",
-    "@letterbookxd/config": "*"
+    "eslint-plugin-import": "^2.29.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }
